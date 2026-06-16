@@ -1,0 +1,51 @@
+{
+  "source_root": "E:\\ViconData",
+  "backup_root": "F:\\Vicon_Backup\\ViconData",
+  "log_dir": "F:\\Vicon_Backup\\logs",
+  "status_dir_name": "_backup_status",
+  "copy_mode": "backup",
+  "use_robocopy_on_windows": true,
+  "robocopy_options": [
+    "/E",
+    "/Z",
+    "/COPY:DAT",
+    "/DCOPY:DAT",
+    "/R:2",
+    "/W:5",
+    "/NP"
+  ],
+  "exclude_dirs": [
+    "$RECYCLE.BIN",
+    "System Volume Information",
+    "Cache",
+    "Temp",
+    "tmp"
+  ],
+  "exclude_files": [
+    "*.tmp",
+    "*.partial",
+    "*.lock"
+  ],
+  "wait_for_file_stability_seconds": 5,
+  "minimum_free_space_gb": 50,
+  "dry_run": false,
+  "allow_delete_in_sync_mirror": false,
+  "robocopy_backup_options": [
+    "/E",
+    "/Z",
+    "/COPY:DAT",
+    "/DCOPY:DAT",
+    "/R:2",
+    "/W:5",
+    "/NP"
+  ],
+  "robocopy_sync_mirror_options": [
+    "/MIR",
+    "/Z",
+    "/COPY:DAT",
+    "/DCOPY:DAT",
+    "/R:2",
+    "/W:5",
+    "/NP"
+  ]
+}
