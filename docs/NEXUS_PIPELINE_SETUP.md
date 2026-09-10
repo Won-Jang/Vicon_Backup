@@ -1,53 +1,52 @@
 # Nexus Pipeline Setup
 
-Recommended operation:
+Recommended Nexus use:
 
-1. Open Nexus.
-2. Go to the Pipeline tools area.
-3. Create a new post-capture pipeline, for example: `PostCapture_Backup_To_F_Drive`.
-4. Add the Nexus operation for running an external application.
-5. Use one of these launch methods.
+```text
+Capture/session ends
+  ↓
+Nexus saves trial/session data to E:
+  ↓
+Nexus post-capture pipeline runs external application
+  ↓
+run_backup.bat copies E:\ViconData to F:\Vicon_Backup\ViconData
+```
 
-## Option A: Run the batch launcher
+## Recommended external command
 
-Program / executable:
+Copy the project folder to:
+
+```text
+C:\ViconTools\vicon-backup-pipeline
+```
+
+In Nexus, add a post-capture pipeline operation that runs this external application:
 
 ```text
 C:\ViconTools\vicon-backup-pipeline\run_backup.bat
 ```
 
-Arguments:
+## Recommended mode for Nexus
 
-```text
-none
-```
-
-## Option B: Run Python directly
-
-Program / executable:
-
-```text
-C:\Windows\py.exe
-```
-
-Arguments:
-
-```text
--3 "C:\ViconTools\vicon-backup-pipeline\scripts\backup_vicon.py" --config "C:\ViconTools\vicon-backup-pipeline\config\backup_config.json"
-```
-
-## Test first
-
-Before enabling automatic post-capture use, test with:
-
-```text
-run_backup_dry_run.bat
-```
-
-Then test manually with:
+Use only:
 
 ```text
 run_backup.bat
 ```
 
-Only after both tests look correct, add it to the Nexus post-capture pipeline.
+Do not use `run_sync_mirror.bat` automatically in Nexus because mirror mode can delete files from the F drive.
+
+## First test
+
+Before adding it to Nexus, run these manually from File Explorer or Command Prompt:
+
+```text
+run_backup_dry_run.bat
+run_backup.bat
+```
+
+Check logs in:
+
+```text
+F:\Vicon_Backup\logs
+```

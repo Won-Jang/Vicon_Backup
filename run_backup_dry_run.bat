@@ -1,5 +1,8 @@
 @echo off
-REM Safe preview of backup mode. No files are copied or deleted.
-set SCRIPT_DIR=%~dp0
-python "%SCRIPT_DIR%scripts\backup_vicon.py" --mode backup --dry-run
-pause
+setlocal
+cd /d "%~dp0"
+python scripts\backup_vicon.py --mode compare --config config\backup_config.json
+set EXITCODE=%ERRORLEVEL%
+echo.
+echo Dry run / compare finished with exit code %EXITCODE%.
+exit /B %EXITCODE%

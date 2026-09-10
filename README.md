@@ -1,320 +1,175 @@
 # Vicon Backup Pipeline
 
-A small Windows-friendly backup pipeline for a Vicon Nexus PC.
+Small Windows backup/sync utility for a Vicon Nexus PC.
 
-The goal is to automatically back up motion tracking data and video files after each session or capture workflow, while keeping Nexus data safe and untouched.
-
-## Current Vicon PC drive layout
+This project is designed for a Vicon PC with this drive layout:
 
 ```text
-C: Windows OS, Nexus, Vicon software, MATLAB/Python, other programs
-D: Video cache / temporary processing drive
-E: Main Vicon data storage
-F: New dedicated backup hard drive
+C: Windows OS, Vicon Nexus, MATLAB/Python, other software
+D: temporary video cache / video processing
+E: main Vicon data storage
+F: dedicated backup hard drive
 ```
 
-## Backup policy
-
-The default backup direction is:
+The regular backup direction is:
 
 ```text
-E:\ViconData  ->  F:\Vicon_Backup\ViconData
+E:\ViconData  →  F:\Vicon_Backup\ViconData
 ```
 
-This project intentionally excludes the normal session backup from:
+## Purpose
+
+The goal is to back up Vicon motion tracking data and video/session files after each session or capture.
+
+Recommended design:
 
 ```text
-C: system/program drive
-D: temporary video cache drive
+Nexus capture/session ends
+  ↓
+Nexus saves data to E drive
+  ↓
+Nexus post-capture pipeline runs run_backup.bat
+  ↓
+Data is copied from E drive to F drive
+  ↓
+Backup log/status file is written
 ```
 
-The backup is copy-only and incremental. It copies new or changed files from `E:` to `F:` but does not delete source files and does not mirror-delete files from the backup drive.
-
-## Why this design
-
-Vicon Nexus supports customized pipelines that can run automatically after capture or be run manually on saved trials. Nexus also supports running external applications from a pipeline operation, which makes it practical to let Nexus trigger this backup script after a capture/session. The file copy itself is handled outside Nexus so it can be logged, tested, and maintained independently.
-
-## Project structure
+## Files
 
 ```text
 vicon-backup-pipeline/
 ├── README.md
 ├── run_backup.bat
 ├── run_backup_dry_run.bat
+├── run_compare.bat
+├── run_sync_mirror.bat
 ├── config/
 │   └── backup_config.json
 ├── docs/
-│   └── NEXUS_PIPELINE_SETUP.md
+│   ├── NEXUS_PIPELINE_SETUP.md
+│   └── SYNC_MODE.md
 ├── logs/
 └── scripts/
     └── backup_vicon.py
 ```
 
-## Quick start
+## Modes
 
-### 1. Copy the project to the Vicon PC
-
-Recommended location:
+### Backup mode
 
 ```text
-C:\ViconTools\vicon-backup-pipeline
+run_backup.bat
 ```
 
-### 2. Edit the config file
+Safe copy-only incremental backup.
 
-Open:
+It copies new and changed files from `E:` to `F:` but does not delete anything from either drive.
 
-```text
-config\backup_config.json
-```
+Use this as the regular Nexus post-capture backup mode.
 
-Default settings:
-
-```json
-{
-  "source_root": "E:\\ViconData",
-  "backup_root": "F:\\Vicon_Backup\\ViconData",
-  "log_dir": "F:\\Vicon_Backup\\logs"
-}
-```
-
-Change `source_root` if the actual Nexus database folder on `E:` uses a different name.
-
-Example:
-
-```json
-"source_root": "E:\\LisaLab_Nexus"
-```
-
-### 3. Run a dry-run test
-
-Double-click:
+### Dry run / compare mode
 
 ```text
 run_backup_dry_run.bat
 ```
 
-This lists what would be copied without actually copying files.
-
-### 4. Run the backup manually
-
-Double-click:
-
-```text
-run_backup.bat
-```
-
-Check:
-
-```text
-F:\Vicon_Backup\logs
-```
-
-You should see log files and status JSON files.
-
-## Nexus post-capture setup
-
-Create a Nexus post-capture pipeline named something like:
-
-```text
-PostCapture_Backup_To_F_Drive
-```
-
-Add a **Run External Application** operation.
-
-Recommended target:
-
-```text
-C:\ViconTools\vicon-backup-pipeline\run_backup.bat
-```
-
-See:
-
-```text
-docs\NEXUS_PIPELINE_SETUP.md
-```
-
-## Configuration options
-
-Main config file:
-
-```text
-config\backup_config.json
-```
-
-Important fields:
-
-| Field | Purpose |
-|---|---|
-| `source_root` | Main Vicon data folder on `E:` |
-| `backup_root` | Backup destination on `F:` |
-| `log_dir` | Backup log/status folder |
-| `copy_mode` | Currently copy-only incremental backup |
-| `use_robocopy_on_windows` | Uses Robocopy on Windows for reliability |
-| `exclude_dirs` | Folder names to skip |
-| `exclude_files` | File patterns to skip |
-| `wait_for_file_stability_seconds` | Wait/check period before copying |
-| `minimum_free_space_gb` | Safety check for available space on `F:` |
-| `dry_run` | If true, list copy operations without copying |
-
-## Copy engine
-
-On Windows, this script uses Robocopy by default.
-
-Default Robocopy options:
-
-```text
-/E /Z /COPY:DAT /DCOPY:DAT /R:2 /W:5 /NP
-```
-
-Meaning:
-
-| Option | Meaning |
-|---|---|
-| `/E` | Copy subfolders, including empty folders |
-| `/Z` | Restartable copy mode |
-| `/COPY:DAT` | Copy data, attributes, and timestamps |
-| `/DCOPY:DAT` | Preserve directory data, attributes, and timestamps |
-| `/R:2` | Retry twice on failed copies |
-| `/W:5` | Wait 5 seconds between retries |
-| `/NP` | No progress percentage in log |
-
-This project does **not** use `/MIR` by default because mirror mode can delete files from the backup if files are removed from the source.
-
-## Output files
-
-Each run writes files to:
-
-```text
-F:\Vicon_Backup\logs
-```
-
-Example:
-
-```text
-vicon_backup_2026-06-16_14-30-10.log
-vicon_backup_status_2026-06-16_14-30-10.json
-vicon_backup_history.csv
-```
-
-Example status JSON:
-
-```json
-{
-  "timestamp": "2026-06-16T14:30:10",
-  "source": "E:\\ViconData",
-  "destination": "F:\\Vicon_Backup\\ViconData",
-  "status": "success",
-  "exit_code": 1,
-  "free_space_gb_before": 1800.5,
-  "free_space_gb_after": 1779.2,
-  "dry_run": false
-}
-```
-
-## Recommended lab workflow
-
-```text
-1. Lab opens Nexus.
-2. Lab captures trials normally.
-3. Nexus saves trial/session data to E:.
-4. Nexus post-capture pipeline runs the backup script.
-5. Script copies E: data to F:.
-6. Script writes log/status files to F:\Vicon_Backup\logs.
-```
-
-## Safety notes
-
-- This backup script does not delete original Nexus data.
-- This backup script does not modify the `E:` drive data.
-- The `D:` drive is treated as temporary cache and is not backed up by default.
-- If final synchronized videos are stored on `D:` instead of `E:`, either change Nexus/video settings so final video files save to `E:`, or add a second source folder later.
-- Run the dry-run test before enabling automatic Nexus pipeline execution.
-
-## Development roadmap
-
-### Version 0.1
-
-- Copy-only backup from `E:` to `F:`
-- Configurable source/destination
-- Robocopy support on Windows
-- Dry-run mode
-- Log files
-- JSON status output
-- CSV backup history
-
-### Version 0.2 ideas
-
-- Detect current Nexus trial/session folder through Nexus API
-- Copy only the active session instead of the whole source root
-- Add simple desktop notification after success/failure
-- Add optional nightly archive to NAS/server
-- Add email or Teams notification on backup failure
-- Add GUI config editor for lab staff
-
-## License
-
-Internal lab/development use. Add an official license before making the repository public.
-
-## E-to-F sync feature
-
-This project now supports both the original safe backup workflow and an optional one-way sync workflow.
-
-### Available modes
-
-| Mode | Direction | Deletes from F:? | Use case |
-|---|---|---:|---|
-| `backup` | `E:` -> `F:` | No | Safe default after each Nexus capture/session |
-| `compare` | Preview only | No | Check differences between E and F before syncing |
-| `sync_mirror` | `E:` -> `F:` | Yes | Make F match E exactly during maintenance |
-
-### Recommended daily Nexus mode
-
-Use this from the Nexus post-capture pipeline:
-
-```text
-run_backup.bat
-```
-
-This keeps the backup copy-only and does not delete anything from the backup drive.
-
-### Preview E/F differences
-
-Run:
+or
 
 ```text
 run_compare.bat
 ```
 
-This uses preview/list mode. It does not copy or delete files. Check the generated log under:
+This previews differences between the E drive source and F drive backup destination.
 
-```text
-F:\Vicon_Backup\logs
-```
+No files are copied or deleted.
 
-### One-way mirror sync
-
-Run:
+### Sync mirror mode
 
 ```text
 run_sync_mirror.bat
 ```
 
-This makes the destination on `F:` match the source on `E:`. This mode can delete files from `F:` that no longer exist on `E:`.
+This makes the F-drive backup match the E-drive source.
 
-Use this only after running `run_compare.bat` and reviewing the log.
+Warning: mirror mode can delete files from `F:` if those files no longer exist on `E:`.
 
-### Why not two-way sync?
+Do not use this automatically in the Nexus pipeline. Use it manually only after running compare mode.
 
-For Vicon/Nexus data, two-way sync is not recommended as the default because it can create conflicts, copy older files back into the active data drive, or restore files that were intentionally removed. The safer design is one-directional:
+## Installation
 
-```text
-E: active Nexus data source
-F: backup/mirror destination
-```
-
-More detail:
+Copy this folder to the Vicon PC:
 
 ```text
-docs\SYNC_MODE.md
+C:\ViconTools\vicon-backup-pipeline
 ```
+
+Create the backup folder on the F drive:
+
+```text
+F:\Vicon_Backup
+```
+
+Edit the config file if needed:
+
+```text
+config\backup_config.json
+```
+
+Default config:
+
+```json
+{
+  "source_root": "E:\\ViconData",
+  "destination_root": "F:\\Vicon_Backup\\ViconData",
+  "log_dir": "F:\\Vicon_Backup\\logs"
+}
+```
+
+If the real Nexus data folder is different, update `source_root` and `destination_root`.
+
+## First test
+
+Run this first:
+
+```text
+run_backup_dry_run.bat
+```
+
+Then run the real backup:
+
+```text
+run_backup.bat
+```
+
+Check logs here:
+
+```text
+F:\Vicon_Backup\logs
+```
+
+## Nexus pipeline setup
+
+After manual testing works, add this file to the Nexus post-capture pipeline as an external application:
+
+```text
+C:\ViconTools\vicon-backup-pipeline\run_backup.bat
+```
+
+Use only `run_backup.bat` for the automatic Nexus pipeline.
+
+## Backup drive note
+
+The `F:` drive should be a dedicated backup drive. A 16TB or larger enterprise/datacenter SATA HDD is recommended for this role.
+
+The program is based on the configured drive letter and folder path, not a specific hard drive model.
+
+## Safety notes
+
+- Do not back up `C:` as part of the regular session backup.
+- Do not back up `D:` unless final video files are stored there.
+- Keep `D:` as temporary video cache if possible.
+- Keep final Vicon data and final video/session files on `E:`.
+- Keep `F:` as backup only.
+- Use backup mode for normal daily work.
+- Use mirror sync only as a manual maintenance tool.

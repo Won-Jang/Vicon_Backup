@@ -1,51 +1,20 @@
 {
   "source_root": "E:\\ViconData",
-  "backup_root": "F:\\Vicon_Backup\\ViconData",
+  "destination_root": "F:\\Vicon_Backup\\ViconData",
   "log_dir": "F:\\Vicon_Backup\\logs",
-  "status_dir_name": "_backup_status",
-  "copy_mode": "backup",
-  "use_robocopy_on_windows": true,
-  "robocopy_options": [
-    "/E",
-    "/Z",
-    "/COPY:DAT",
-    "/DCOPY:DAT",
-    "/R:2",
-    "/W:5",
-    "/NP"
-  ],
-  "exclude_dirs": [
+  "robocopy_options": {
+    "backup": ["/E", "/Z", "/COPY:DAT", "/DCOPY:DAT", "/R:2", "/W:5", "/FFT", "/NP"],
+    "compare": ["/E", "/L", "/NJH", "/NJS", "/NP"],
+    "sync_mirror": ["/MIR", "/Z", "/COPY:DAT", "/DCOPY:DAT", "/R:2", "/W:5", "/FFT", "/NP"]
+  },
+  "excluded_dirs": [
     "$RECYCLE.BIN",
-    "System Volume Information",
-    "Cache",
-    "Temp",
-    "tmp"
+    "System Volume Information"
   ],
-  "exclude_files": [
-    "*.tmp",
-    "*.partial",
-    "*.lock"
+  "excluded_files": [
+    "Thumbs.db",
+    "desktop.ini"
   ],
-  "wait_for_file_stability_seconds": 5,
   "minimum_free_space_gb": 50,
-  "dry_run": false,
-  "allow_delete_in_sync_mirror": false,
-  "robocopy_backup_options": [
-    "/E",
-    "/Z",
-    "/COPY:DAT",
-    "/DCOPY:DAT",
-    "/R:2",
-    "/W:5",
-    "/NP"
-  ],
-  "robocopy_sync_mirror_options": [
-    "/MIR",
-    "/Z",
-    "/COPY:DAT",
-    "/DCOPY:DAT",
-    "/R:2",
-    "/W:5",
-    "/NP"
-  ]
+  "write_status_json": true
 }

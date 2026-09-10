@@ -1,74 +1,51 @@
 # Sync Mode
 
-This project has three modes:
+This project has three modes.
 
-| Mode | Direction | Deletes from F:? | Recommended use |
-|---|---|---:|---|
-| `backup` | `E:` -> `F:` | No | Default Nexus post-capture backup |
-| `compare` | `E:` vs `F:` preview | No | Check what would change before syncing |
-| `sync_mirror` | `E:` -> `F:` | Yes | Maintenance only, after reviewing compare mode |
+## 1. Backup mode
 
-## Recommended policy
+File:
 
-Use `backup` from the Nexus post-capture pipeline. This is copy-only and safest for lab data.
+```text
+run_backup.bat
+```
 
-Use `compare` manually when you want to inspect differences between the main Vicon data drive and backup drive.
+Behavior:
 
-Use `sync_mirror` only when you intentionally want the backup drive to match the current E drive exactly.
+```text
+E:\ViconData → F:\Vicon_Backup\ViconData
+```
 
-## Important warning
+This copies new and changed files. It does not delete files from E or F.
 
-`sync_mirror` uses Robocopy `/MIR` on Windows. `/MIR` can delete files from the destination (`F:`) when those files no longer exist on the source (`E:`).
+Use this for regular Nexus post-capture backup.
 
-That is useful for a true mirror, but it is not the safest daily backup behavior.
+## 2. Compare mode
 
-## Recommended workflow
-
-1. Run:
+File:
 
 ```text
 run_compare.bat
 ```
 
-2. Review the log in:
+This previews differences between E and F. It does not copy or delete files.
 
-```text
-F:\Vicon_Backup\logs
-```
+Use this before mirror sync.
 
-3. Only if the preview looks correct, run:
+## 3. Sync mirror mode
+
+File:
 
 ```text
 run_sync_mirror.bat
 ```
 
-## Command-line examples
+This makes the F-drive backup match the E-drive source.
 
-Safe backup:
-
-```text
-python scripts\backup_vicon.py --mode backup
-```
-
-Preview only:
+Warning:
 
 ```text
-python scripts\backup_vicon.py --mode compare
+Files on F that do not exist on E may be deleted.
 ```
 
-One-way mirror sync:
-
-```text
-python scripts\backup_vicon.py --mode sync_mirror --allow-delete
-```
-
-## What not to do
-
-Do not use two-way sync for Nexus data unless there is a very specific reason. Two-way sync can create conflicts, overwrite newer files, or accidentally bring old/deleted files back into the active Nexus data folder.
-
-For this Vicon PC, the clean design is:
-
-```text
-E: active/main Vicon data
-F: backup/mirror destination
-```
+Use this manually only when you intentionally want F to match E exactly.
