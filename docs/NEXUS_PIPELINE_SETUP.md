@@ -9,7 +9,7 @@ Nexus saves trial/session data to E:
   ↓
 Nexus post-capture pipeline runs external application
   ↓
-run_backup.bat copies E:\ViconData to F:\Vicon_Backup\ViconData
+run_backup.bat copies E:\ to F:\
 ```
 
 ## Recommended external command
@@ -48,5 +48,5 @@ run_backup.bat
 Check logs in:
 
 ```text
-F:\Vicon_Backup\logs
+F:\Vicon_Backup_Logs
 ```

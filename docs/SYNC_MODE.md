@@ -13,7 +13,7 @@ run_backup.bat
 Behavior:
 
 ```text
-E:\ViconData → F:\Vicon_Backup\ViconData
+E:\ → F:\
 ```
 
 This copies new and changed files. It does not delete files from E or F.

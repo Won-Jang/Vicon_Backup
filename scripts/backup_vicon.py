@@ -3,12 +3,16 @@
 Vicon Backup Pipeline
 
 Default use case:
-    E:\\ViconData  ->  F:\\Vicon_Backup\\ViconData
+    E:\\  ->  F:\\
 
 Modes:
-    backup       Copy-only incremental backup. Safe default for Nexus pipeline.
+    write_once   Copy new files only. Does not overwrite existing destination files.
+                 Official V1 mode for daily 10 PM Windows Task Scheduler backup.
+    backup       Copy-only incremental backup. Copies new and changed files.
+                 Kept for future Nexus pipeline use.
     compare      Dry comparison/listing. No copy, no delete.
     sync_mirror  Make destination match source. Can delete files from destination.
+                 Future/manual use only.
 """
 
 from __future__ import annotations
@@ -111,7 +115,7 @@ def run(mode: str, config_path: Path) -> int:
         return 99
 
     # For backup/sync modes, ensure destination exists before checking free space.
-    if mode in {"backup", "sync_mirror"}:
+    if mode in {"write_once", "backup", "sync_mirror"}:
         ensure_dir(dest)
         min_free = float(config.get("minimum_free_space_gb", 0))
         try:
@@ -124,6 +128,10 @@ def run(mode: str, config_path: Path) -> int:
         except Exception as exc:
             msg = f"Could not check destination free space: {exc}"
             print(f"WARNING: {msg}")
+
+    if mode == "write_once":
+        print("INFO: write_once mode copies only files that do not already exist at the destination.")
+        print("Existing files on F are not overwritten, even if the E-drive version changes later.")
 
     if mode == "sync_mirror":
         print("WARNING: sync_mirror mode can delete files from the destination if they no longer exist in the source.")
@@ -162,7 +170,7 @@ def run(mode: str, config_path: Path) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Vicon PC E-to-F backup/sync utility")
-    parser.add_argument("--mode", choices=["backup", "compare", "sync_mirror"], default="backup")
+    parser.add_argument("--mode", choices=["write_once", "backup", "compare", "sync_mirror"], default="write_once")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     args = parser.parse_args()
     return run(args.mode, args.config)
